@@ -1,28 +1,15 @@
-{% load l10n %}{# Author: Justin Bronn, Travis Pinney & Dane Springmeyer #}
-OpenLayers.Projection.addTransform("EPSG:4326", "EPSG:3857", OpenLayers.Layer.SphericalMercator.projectForward);
-{% block vars %}var {{ module }} = {};
-{{ module }}.map = null; {{ module }}.controls = null; {{ module }}.panel = null; {{ module }}.re = new RegExp("^SRID=\\d+;(.+)", "i"); {{ module }}.layers = {};
+{% load l10n %}
+{% block vars %}if (!window.gis) window.gis = {"fields": []};
+var {{ module }} = {"id": "{{ id }}", "srid": "{{ srid }}" };
+{{ module }}.map = null; {{ module }}.controls = null; {{ module }}.panel = null; {{ module }}.layers = {};
 {{ module }}.modifiable = {{ modifiable|yesno:"true,false" }};
-{{ module }}.wkt_f = new OpenLayers.Format.WKT();
 {{ module }}.is_collection = {{ is_collection|yesno:"true,false" }};
 {{ module }}.collection_type = '{{ collection_type }}';
 {{ module }}.is_linestring = {{ is_linestring|yesno:"true,false" }};
 {{ module }}.is_polygon = {{ is_polygon|yesno:"true,false" }};
 {{ module }}.is_point = {{ is_point|yesno:"true,false" }};
+window.gis.fields.push({{ module }});
 {% endblock %}
-{{ module }}.get_ewkt = function(feat){return 'SRID={{ srid }};' + {{ module }}.wkt_f.write(feat);}
-{{ module }}.read_wkt = function(wkt){
-  // OpenLayers cannot handle EWKT -- we make sure to strip it out.
-  // EWKT is only exposed to OL if there's a validation error in the admin.
-  var match = {{ module }}.re.exec(wkt);
-  if (match){wkt = match[1];}
-  return {{ module }}.wkt_f.read(wkt);
-}
-{{ module }}.write_wkt = function(feat){
-  if ({{ module }}.is_collection){ {{ module }}.num_geom = feat.geometry.components.length;}
-  else { {{ module }}.num_geom = 1;}
-  document.getElementById('{{ id }}').value = {{ module }}.get_ewkt(feat);
-}
 {{ module }}.add_wkt = function(event){
   // This function will sync the contents of the `vector` layer with the
   // WKT in the text field.
@@ -31,7 +18,7 @@ OpenLayers.Projection.addTransform("EPSG:4326", "EPSG:3857", OpenLayers.Layer.Sp
     for (var i = 0; i < {{ module }}.layers.vector.features.length; i++){
       feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
     }
-    {{ module }}.write_wkt(feat);
+    gis.write_wkt({{ module }}, feat);
   } else {
     // Make sure to remove any previously added features.
     if ({{ module }}.layers.vector.features.length > 1){
@@ -39,7 +26,7 @@ OpenLayers.Projection.addTransform("EPSG:4326", "EPSG:3857", OpenLayers.Layer.Sp
       {{ module }}.layers.vector.removeFeatures(old_feats);
       {{ module }}.layers.vector.destroyFeatures(old_feats);
     }
-    {{ module }}.write_wkt(event.feature);
+    gis.write_wkt({{ module }}, event.feature);
   }
 }
 {{ module }}.modify_wkt = function(event){
@@ -122,7 +109,7 @@ OpenLayers.Projection.addTransform("EPSG:4326", "EPSG:3857", OpenLayers.Layer.Sp
     if (wkt){
       // After reading into geometry, immediately write back to
       // WKT <textarea> as EWKT (so that SRID is included).
-      var admin_geom = {{ module }}.read_wkt(wkt);
+      var admin_geom = gis.read_wkt(wkt);
       {{ module }}.write_wkt(admin_geom);
       if ({{ module }}.is_collection){
 	// If geometry collection, add each component individually so they may be
@@ -170,3 +157,4 @@ OpenLayers.Projection.addTransform("EPSG:4326", "EPSG:3857", OpenLayers.Layer.Sp
       {{ module }}.enableDrawing();
     }
 }
+
