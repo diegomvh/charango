@@ -31,3 +31,8 @@ class JsExternalCompressor(JsCompressor):
                 content = self.parser.elem_content(elem)
                 self.split_content.append((SOURCE_HUNK, content, None, elem))
         return self.split_content
+        
+    def output(self, mode='file', forced=False):
+        print self.external  
+        output = super(JsExternalCompressor, self).output(mode, forced)
+        return output
