@@ -1,4 +1,4 @@
-#!/SRr/bin/env python
+#!/src/bin/env python
 # -*- coding: utf-8 -*-
 
 from django.contrib.gis.admin.widgets import OpenLayersWidget
@@ -27,9 +27,10 @@ def get_map_widget(db_field):
         collection_type = 'None'
 
     num_zoom = 18
+    #TODO: Que google sea condicional
     class OLMap(OpenLayersWidget):
         class Media:
-            js = ( "js/gis/openlayers.js", )
+            js = ( "http://openlayers.org/api/2.11/OpenLayers.js", "http://maps.google.com/maps/api/js?sensor=false", "js/gis/openlayers.js", )
         template = 'gis/forms/openlayers.html'
         geom_type = db_field.geom_type
         params = {'default_lon' : 0,
