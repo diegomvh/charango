@@ -28,6 +28,8 @@ def get_map_widget(db_field):
 
     num_zoom = 18
     class OLMap(OpenLayersWidget):
+        class Media:
+            js = ( "js/gis/openlayers.js", )
         template = 'gis/forms/openlayers.html'
         geom_type = db_field.geom_type
         params = {'default_lon' : 0,
