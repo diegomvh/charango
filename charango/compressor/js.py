@@ -33,6 +33,6 @@ class JsExternalCompressor(JsCompressor):
         return self.split_content
         
     def output(self, mode='file', forced=False):
-        print self.external  
+        print map(lambda el: el.__class__, self.external)
         output = super(JsExternalCompressor, self).output(mode, forced)
         return output
