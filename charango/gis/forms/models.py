@@ -1,7 +1,7 @@
 #!/src/bin/env python
 # -*- coding: utf-8 -*-
 
-from django.contrib.gis.admin.widgets import OpenLayersWidget
+from charango.gis.forms.widgets import OpenLayersWidget
 from django.contrib.gis.gdal import OGRGeomType
 
 """

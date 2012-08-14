@@ -1,6 +1,6 @@
 from django.forms.widgets import Textarea
 from django.template import loader, Context
-from django.templatetags.static import static
+from django.templatetags import static
 from django.utils import translation
 
 from django.contrib.gis.gdal import OGRException
@@ -71,14 +71,14 @@ class OpenLayersWidget(Textarea):
         "Builds the map options hash for the OpenLayers template."
 
         # JavaScript construction utilities for the Bounds and Projection.
-        def ol_bounds(extent):
-            return 'new OpenLayers.Bounds(%s)' % str(extent)
-        def ol_projection(srid):
-            return 'new OpenLayers.Projection("EPSG:%s")' % srid
+        def ol_boundsCode(extent):
+            return '"%s"' % str(extent)
+        def ol_projectionCode(srid):
+            return '"EPSG:%s"' % srid
 
         # An array of the parameter name, the name of their OpenLayers
         # counterpart, and the type of variable they are.
-        map_types = [('srid', 'projection', 'srid'),
+        map_types = [('srid', 'projectionCode', 'srid'),
                      ('display_srid', 'displayProjection', 'srid'),
                      ('units', 'units', str),
                      ('max_resolution', 'maxResolution', float),
@@ -93,9 +93,9 @@ class OpenLayersWidget(Textarea):
         for param_name, js_name, option_type in map_types:
             if self.params.get(param_name, False):
                 if option_type == 'srid':
-                    value = ol_projection(self.params[param_name])
+                    value = ol_projectionCode(self.params[param_name])
                 elif option_type == 'bounds':
-                    value = ol_bounds(self.params[param_name])
+                    value = ol_boundsCode(self.params[param_name])
                 elif option_type in (float, int):
                     value = self.params[param_name]
                 elif option_type in (str,):

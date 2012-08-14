@@ -6,6 +6,7 @@ import re
 from compressor.conf import settings
 from compressor.base import Compressor, SOURCE_HUNK, SOURCE_FILE
 from compressor.js import JsCompressor
+from lxml.html import tostring
 
 class JsExternalCompressor(JsCompressor):
 
@@ -33,6 +34,6 @@ class JsExternalCompressor(JsCompressor):
         return self.split_content
         
     def output(self, mode='file', forced=False):
-        print map(lambda el: el.__class__, self.external)
-        output = super(JsExternalCompressor, self).output(mode, forced)
+        output = "\n".join(map(lambda el: tostring(el), self.external))
+        output += "\n" + super(JsExternalCompressor, self).output(mode, forced)
         return output

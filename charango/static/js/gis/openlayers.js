@@ -1,13 +1,17 @@
 $(function() {
-    if (!window.gis) { window.gis = {}, window.gis.config = []; }
+    if (!window.gis) { gis = {}, gis.config = []; }
     
     /* GisField class */
     var GisField = function(config) {
+        var self = this;
         $.extend(this, config);
+        //Build options
+        if (this.options["projectionCore"])
+            this.options["projection"] = new OpenLayers.Projection(this.options["projectionCore"]);
         // The admin map for this geometry field.
         this.map = new OpenLayers.Map(this.id + '_map', this.options);
         // Base Layer
-        this.layers.base = new OpenLayers.Layer.WMS( "{{ wms_name }}", "{{ wms_url }}", {layers: '{{ wms_layer }}'} );
+        this.layers.base = new OpenLayers.Layer.WMS( this.wms_name, this.wms_url, this.params);
         this.map.addLayer(this.layers.base);
         if (this.is_linestring)
             OpenLayers.Feature.Vector.style["default"]["strokeWidth"] = 3; // Default too thin for linestrings.
@@ -32,16 +36,16 @@ $(function() {
             // Zooming to the bounds.
             this.map.zoomToExtent(admin_geom.geometry.getBounds());
             if (this.is_point){
-                this.map.zoomTo({{ point_zoom }});
+                this.map.zoomTo(this.point_zoom);
             }
         } else {
-                this.map.setCenter(new OpenLayers.LonLat({{ default_lon }}, {{ default_lat }}), {{ default_zoom }});
+                this.map.setCenter(new OpenLayers.LonLat(this.default_lon, this.default_lat), this.default_zoom);
         }
         // This allows editing of the geographic fields -- the modified WKT is
         // written back to the content field (as EWKT, so that the ORM will know
         // to transform back to original SRID).
-        this.layers.vector.events.on({"featuremodified" : this.modify_wkt});
-        this.layers.vector.events.on({"featureadded" : this.add_wkt});
+        this.layers.vector.events.on({"featuremodified" : function(event) { self.modify_wkt.call(self, event); }});
+        this.layers.vector.events.on({"featureadded" : function(event) { self.add_wkt.call(self, event); }});
         
         // Map controls:
         // Add geometry specific panel of toolbar controls
@@ -93,8 +97,8 @@ $(function() {
               // When modifying the selected components are added to the
               // vector layer so we only increment to the `num_geom` value.
               var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry[this.geom_type]());
-              for (var i = 0; i < this..num_geom; i++){
-        	feat.geometry.addComponents([this.layers.vector.features[i].geometry]);
+              for (var i = 0; i < this..num_geom; i++) {
+                  feat.geometry.addComponents([this.layers.vector.features[i].geometry]);
               }
               this.write_wkt(feat);
             }
@@ -154,6 +158,9 @@ $(function() {
     gis.wkt_f = new OpenLayers.Format.WKT();
     gis.re = new RegExp("^SRID=\\d+;(.+)", "i");
     
+    //Si usa google api
+    gis.geocoder = new google.maps.Geocoder();
+    
     gis.get_ewkt = function(srid, feat) {
         return 'SRID=' + srid + this.wkt_f.write(feat);
     }
@@ -169,6 +176,11 @@ $(function() {
     }
     
     gis.fields = [];
+    gis.getField = function(field_id) {
+        return $(gis.fields).filter(function (index, field) {
+            return field.id == field_id;            
+        })[0];
+    }
     $(gis.config).each(function(index, config) {
         var field = new GisField(config);
         field.map.addLayers([
@@ -177,6 +189,6 @@ $(function() {
             new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE}),
             new OpenLayers.Layer.Google("Google Physical",{type: google.maps.MapTypeId.TERRAIN}),
         ]);
-        gis.fields.append(field);
+        gis.fields.push(field);
     });
 })
